@@ -82,3 +82,24 @@ for epoch in range(1, epochs + 1):
     print(f"Epoch {epoch}/{epochs} | "
           f"Train Loss: {train_loss:.4f} Acc: {train_acc:.2%} | "
           f"Test Loss: {test_loss:.4f} Acc: {test_acc:.2%}")
+model.eval()
+examples = next(iter(test_loader))
+images, labels = examples
+images, labels = images[:8].to(device), labels[:8].to(device)
+
+with torch.no_grad():
+    outputs = model(images)
+    preds   = outputs.argmax(1)
+
+fig, axes = plt.subplots(2, 4, figsize=(12, 6))
+for i, ax in enumerate(axes.flat):
+    img = images[i].cpu().squeeze().numpy()
+    ax.imshow(img, cmap="gray")
+    color = "green" if preds[i] == labels[i] else "red"
+    ax.set_title(f"Pred: {preds[i].item()} | True: {labels[i].item()}",
+                 color=color)
+    ax.axis("off")
+
+plt.suptitle("CNN Predictions on MNIST")
+plt.tight_layout()
+plt.show()    
