@@ -197,6 +197,21 @@ for epoch in range(1, 11):
           f"Loss: {epoch_loss:.4f} | "
           f"Train Acc: {train_acc:.2%} | "
           f"Test Acc: {test_acc:.2%}")
+fig, axes = plt.subplots(1,2, figsize=(12,5))
+
+axes[0].plot(train_losses, marker="o", color="coral")
+axes[0].set_title("Training Loss")
+axes[0].set_xlabel("Epoch")
+axes[0].set_ylabel("Loss")
+
+axes[1].plot(test_accs, marker="s", color="teal")
+axes[1].set_title("test accuracy")
+axes[1].set_xlabel("Epoch")
+axes[1].set_ylabel("Accuracy")
+
+plt.tight_layout()
+plt.show()
+
     
         
 
