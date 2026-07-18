@@ -183,5 +183,20 @@ for epoch in range(1, 11):
     train_acc = correct / len(X_train)
     epoch_loss = total_loss / len(train_loader)
     train_losses.append(epoch_loss)
+ model.eval()
+    correct = 0
+    with torch.no_grad():
+        for X_batch, y_batch in test_loader:
+            out = model(X_batch)
+            correct += (out.argmax(1) == y_batch).sum().item()
+
+    test_acc = correct / len(X_test)
+    test_acc.append(test_acc)
+
+    print(f"Epoch {epoch:2d} | "
+          f"Loss: {epoch_loss:.4f} | "
+          f"Train Acc: {train_acc:.2%} | "
+          f"Test Acc: {test_acc:.2%}")
+    
         
 
