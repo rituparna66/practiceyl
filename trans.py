@@ -96,4 +96,92 @@ class TransformerEncoderBlock(nn.Module):
         ff_out = self.ff(x)
         x = self.norm2(x + self.dropout(ff_out))
         return x
+class MiniTransformer(nn.Module):
+    def __init__(self, vocab_size, d_model, num_heads,
+                 d_ff, num_layers, num_classes,
+                 max_seq_len=128, dropout=0.1):
+        super().__init__()
+        self.embedding = nn.Embedding(vocab_size, d_model)
+        self.pos_enc = PositionalEncoding(d_model, max_seq_len, dropout)
+        self.blocks = nn.ModuleList([
+            TransformerEncoderBlock(d_model, num_heads, d_ff, dropout)
+            for _ in range(num_layers)
+        ])
+        self.norm = nn.LayerNorm(d_model)
+        self.classifier = nn.Linear(d_model, num_classes)
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, x, mask=None):
+        x = self.embeddings(x)
+        x = self.pos_enc(x)
+        for block in self.blocks:
+            x = block(x, mask)
+
+        x = self.norm(x)
+        x = x.mean(dim=1)
+        x = self.classifier(self.dropout(x))
+        return x
+
+
+torch.manual_seed(42)
+
+model = MiniTransformer(
+    vocab_size=1000,
+    d_model=32,
+    num_heads=4,
+    d_ff=128,
+    num_layers=2,
+    num_classes=2
+)
+
+total_params = sum(p.numel() for p in model.parameters())
+print(f"Model built successfully")
+print(f"total parameters: {total_params:,}")
+print()
+print(model)
+
+vocab_size = 1000
+seq_len = 20
+n_samples = 500
+
+X = torch.randint(0, vocab_size, (n_samples, seq_len))
+y = torch.randint(0, 2, (n_samples,))
+
+split = int(0.8 * n_samples)
+X_train, X_test = X[:split], X[split:]
+y_train, y_test = y[:split], y[split:]
+
+train_loader = DataLoader(TensorDataset(X_train, y_train),
+                          batch_size=32, shuffle=True)
+test_loader = DataLoader(TensorDataset(X_test, y_test),
+                         batch_size=32)
+
+
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+criterion = nn.CrossEntropyLoss()
+
+train_losses = []
+test_acc = []
+
+print("\nTraining...\n")
+
+for epoch in range(1, 11):
+
+    model.train()
+    total_loss, correct = 0, 0
+
+    for X_batch, y_batch in train_loader:
+        optimizer.zero_grad()
+        output = model(X_batch)
+        loss = criterion(output, y_batch)
+        loss.backward()
+        optimizer.step()
+
+        total_loss += loss.item()
+        correct += (output.argmax(1) == y_batch).sum().item()
+
+    train_acc = correct / len(X_train)
+    epoch_loss = total_loss / len(train_loader)
+    train_losses.append(epoch_loss)
+        
 
